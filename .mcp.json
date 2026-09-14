@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mcp-tools-istefox": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "http://127.0.0.1:27200/mcp",
+        "--header",
+        "Authorization: Bearer iA-IqNMoe1iY9j7LvfPIIJazvzwneuxg3h4TuctRX8s"
+      ]
+    }
+  }
+}
