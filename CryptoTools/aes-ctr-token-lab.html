@@ -1,0 +1,501 @@
+<title>AES-CTR Token Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#eef1f7;
+    --bg-elevated:#ffffff;
+    --bg-inset:#e6eaf2;
+    --border:#d7dce8;
+    --text:#12151f;
+    --text-dim:#5b6478;
+    --text-faint:#8891a3;
+    --accent:#b45309;
+    --accent-soft:#fdecd2;
+    --on-accent:#fffaf1;
+    --accent2:#0f766e;
+    --accent2-soft:#d9f2ee;
+    --danger:#be123c;
+    --danger-soft:#fbe1e7;
+    --focus:#2563eb;
+    --shadow:0 1px 2px rgba(20,24,38,.06), 0 10px 28px -16px rgba(20,24,38,.22);
+    --font-display:'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0c1120;
+      --bg-elevated:#141b2c;
+      --bg-inset:#0e1626;
+      --border:#26304a;
+      --text:#e8ecf5;
+      --text-dim:#98a3bc;
+      --text-faint:#68728c;
+      --accent:#ffb454;
+      --accent-soft:#3a2a10;
+      --on-accent:#1a1200;
+      --accent2:#5eead4;
+      --accent2-soft:#0e2e2a;
+      --danger:#fb7185;
+      --danger-soft:#3a121c;
+      --focus:#7fb1ff;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 34px -18px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c1120;
+    --bg-elevated:#141b2c;
+    --bg-inset:#0e1626;
+    --border:#26304a;
+    --text:#e8ecf5;
+    --text-dim:#98a3bc;
+    --text-faint:#68728c;
+    --accent:#ffb454;
+    --accent-soft:#3a2a10;
+    --on-accent:#1a1200;
+    --accent2:#5eead4;
+    --accent2-soft:#0e2e2a;
+    --danger:#fb7185;
+    --danger-soft:#3a121c;
+    --focus:#7fb1ff;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 34px -18px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-display);
+    padding-block:2.5rem 3.5rem;
+  }
+  .page{max-width:1080px; margin:0 auto; padding-inline:20px; display:flex; flex-direction:column; gap:22px;}
+
+  .eyebrow{
+    font-size:.6875rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 8px;
+  }
+  h1{
+    font-size:clamp(1.6rem, 1.25rem + 1.5vw, 2.35rem);
+    font-weight:800; line-height:1.12; margin:0 0 10px; text-wrap:balance;
+  }
+  .dek{
+    max-width:62ch; color:var(--text-dim); font-size:1rem; line-height:1.55; margin:0;
+  }
+  .dek code{
+    font-family:var(--font-mono); font-size:.875em; background:var(--bg-inset);
+    border:1px solid var(--border); border-radius:4px; padding:.1em .35em;
+  }
+
+  .bench{display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:20px;}
+  @media (max-width:760px){ .bench{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px;
+    border-top:3px solid var(--text-faint); padding:18px 20px; box-shadow:var(--shadow);
+  }
+  .panel--diagram{border-top-color:var(--accent);}
+  .panel--iv{border-top-color:var(--accent);}
+  .panel--ct{border-top-color:var(--accent2);}
+  .panel--result{border-top-color:var(--text-faint);}
+  .panel--result.is-success{border-top-color:var(--accent2);}
+  .panel--result.is-danger{border-top-color:var(--danger);}
+
+  .panel-label{
+    font-size:.75rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-dim); margin:0 0 12px;
+  }
+  .panel-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .panel-head .panel-label{margin:0 0 12px;}
+
+  .readouts{display:flex; flex-direction:column; gap:16px;}
+
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  label{
+    font-size:.75rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-dim);
+  }
+  input[type="text"], textarea{
+    font-family:var(--font-mono); font-size:.9375rem; color:var(--text);
+    background:var(--bg-inset); border:1px solid var(--border); border-radius:6px;
+    padding:10px 12px; resize:vertical; width:100%;
+  }
+  textarea{line-height:1.5;}
+  .hint{font-size:.75rem; color:var(--text-faint); font-family:var(--font-display);}
+  .hint.is-danger{color:var(--danger);}
+  .hint.is-ok{color:var(--accent2);}
+
+  .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;}
+  .btn{
+    font-family:var(--font-display); font-weight:700; font-size:.8125rem;
+    padding:10px 15px; border-radius:6px; border:1px solid var(--border);
+    background:var(--bg-inset); color:var(--text); cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.06);}
+  .btn:active{transform:translateY(1px);}
+  .btn--primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+  .btn--danger-outline{background:transparent; border-color:var(--danger); color:var(--danger);}
+  .btn--ghost{background:transparent; border-color:transparent; color:var(--text-dim); padding:6px 8px;}
+  .btn--sm{font-size:.75rem; padding:6px 10px;}
+
+  .anatomy{display:flex; gap:6px; border-radius:8px; overflow:hidden; margin-bottom:12px;}
+  .anatomy-seg{
+    padding:14px 8px; font-family:var(--font-mono); font-size:.75rem; text-align:center;
+    border-radius:6px; border:1px solid; line-height:1.3;
+  }
+  .anatomy-seg--iv{flex:0 0 32%; background:var(--accent-soft); color:var(--accent); border-color:var(--accent);}
+  .anatomy-seg--ct{flex:1; background:var(--accent2-soft); color:var(--accent2); border-color:var(--accent2);}
+
+  .tag{
+    display:block; font-size:.8125rem; line-height:1.5; padding:8px 12px; border-radius:6px;
+    border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); margin:0;
+  }
+
+  .readout{display:flex; gap:8px;}
+  .readout input{flex:1; min-width:0; font-variant-numeric:tabular-nums; letter-spacing:.01em;}
+
+  .pill{
+    display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px;
+    font-size:.6875rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+    background:var(--bg-inset); color:var(--text-dim); border:1px solid var(--border);
+  }
+  .pill.is-success{background:var(--accent2-soft); color:var(--accent2); border-color:var(--accent2);}
+  .pill.is-danger{background:var(--danger-soft); color:var(--danger); border-color:var(--danger);}
+
+  .result-box{
+    font-family:var(--font-mono); font-size:.9375rem; background:var(--bg-inset);
+    border:1px solid var(--border); border-radius:6px; padding:12px 14px; margin:12px 0;
+    white-space:pre-wrap; word-break:break-word; min-height:1.4em;
+  }
+
+  .console{
+    font-family:var(--font-mono); font-size:.8125rem; line-height:1.65;
+    background:var(--bg-inset); border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px; max-height:230px; overflow-y:auto; display:flex; flex-direction:column; gap:2px;
+  }
+  .console .line{white-space:pre-wrap; word-break:break-word;}
+  .console .line .t{color:var(--text-faint); margin-right:.5em;}
+  .console .line.ok{color:var(--accent2);}
+  .console .line.err{color:var(--danger);}
+  .console .line.info{color:var(--text-dim);}
+
+  :focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+</style>
+
+<div class="page">
+  <header>
+    <p class="eyebrow">CryptoTools · verificación interoperable</p>
+    <h1>AES-CTR Token Lab</h1>
+    <p class="dek">
+      Cifra y descifra con el mismo esquema que <code>CryptoTools/aesCtrToken.js</code>:
+      IV de 16 bytes ASCII sin decodificar de hex, sin autenticación. Úsalo para probar
+      el round-trip y ver en vivo el problema de integridad de CTR sin MAC.
+    </p>
+  </header>
+
+  <div class="bench">
+    <section class="panel panel--control" aria-labelledby="control-h">
+      <h2 id="control-h" class="panel-label">Entradas</h2>
+
+      <div class="field">
+        <label for="secretKey">Clave secreta</label>
+        <input id="secretKey" type="text" value="0123456789abcdef" autocomplete="off" spellcheck="false">
+        <p class="hint" id="keyHint">&nbsp;</p>
+      </div>
+
+      <div class="field">
+        <label for="plaintext">Texto plano (JSON)</label>
+        <textarea id="plaintext" rows="4" spellcheck="false">{"sub":"user-42","role":"admin","exp":1999999999}</textarea>
+        <p class="hint">Dato de ejemplo — edítalo libremente.</p>
+      </div>
+
+      <div class="field">
+        <label for="tokenField">Token (randomHex + ciphertext hex)</label>
+        <textarea id="tokenField" rows="3" spellcheck="false" placeholder="Se completa al cifrar, o pega uno propio"></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="btnEncrypt" class="btn btn--primary" type="button">Cifrar</button>
+        <button id="btnDecrypt" class="btn" type="button">Descifrar</button>
+        <button id="btnTamper" class="btn btn--danger-outline" type="button">Manipular 1 byte</button>
+        <button id="btnSelfTest" class="btn btn--ghost" type="button">Autotest</button>
+      </div>
+    </section>
+
+    <section class="readouts">
+      <div class="panel panel--diagram">
+        <h2 class="panel-label">Anatomía del token</h2>
+        <div class="anatomy">
+          <div class="anatomy-seg anatomy-seg--iv"><span>IV · 16 chars ASCII</span></div>
+          <div class="anatomy-seg anatomy-seg--ct"><span>ciphertext · hex</span></div>
+        </div>
+        <p class="tag">Riesgo: el IV son los caracteres del hex, no los bytes que ese hex representa (bug conservado del Java original).</p>
+      </div>
+
+      <div class="panel panel--iv">
+        <div class="panel-head">
+          <h2 class="panel-label">IV (randomHex)</h2>
+        </div>
+        <div class="readout">
+          <input id="outIv" class="mono" type="text" readonly aria-label="IV generado">
+          <button class="btn btn--ghost btn--sm copy" data-copy="outIv" type="button">Copiar</button>
+        </div>
+      </div>
+
+      <div class="panel panel--ct">
+        <div class="panel-head">
+          <h2 class="panel-label">Ciphertext (hex)</h2>
+        </div>
+        <div class="readout">
+          <input id="outCt" class="mono" type="text" readonly aria-label="Ciphertext en hexadecimal">
+          <button class="btn btn--ghost btn--sm copy" data-copy="outCt" type="button">Copiar</button>
+        </div>
+      </div>
+
+      <div class="panel panel--result" id="resultPanel">
+        <div class="panel-head">
+          <h2 class="panel-label">Resultado del descifrado</h2>
+          <span class="pill" id="resultPill">—</span>
+        </div>
+        <pre class="result-box" id="outPlain">—</pre>
+        <p class="tag">Riesgo: sin MAC — una clave incorrecta o un byte manipulado no lanzan excepción, solo corrompen el resultado silenciosamente.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel panel--console">
+    <div class="panel-head">
+      <h2 class="panel-label">Registro</h2>
+      <button id="btnClearLog" class="btn btn--ghost btn--sm" type="button">Limpiar</button>
+    </div>
+    <div class="console" id="consoleLog" role="log" aria-live="polite"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var RANDOM_HEX_LENGTH = 16;
+
+  var els = {
+    secretKey: document.getElementById('secretKey'),
+    keyHint: document.getElementById('keyHint'),
+    plaintext: document.getElementById('plaintext'),
+    tokenField: document.getElementById('tokenField'),
+    outIv: document.getElementById('outIv'),
+    outCt: document.getElementById('outCt'),
+    outPlain: document.getElementById('outPlain'),
+    resultPanel: document.getElementById('resultPanel'),
+    resultPill: document.getElementById('resultPill'),
+    consoleLog: document.getElementById('consoleLog')
+  };
+
+  function bytesFromUtf8(str){ return new TextEncoder().encode(str); }
+  function bytesToHex(bytes){
+    var out = '';
+    for (var i = 0; i < bytes.length; i++) out += bytes[i].toString(16).padStart(2, '0');
+    return out;
+  }
+  function hexToBytes(hex){
+    var clean = hex.trim();
+    if (clean.length % 2 !== 0) throw new Error('Longitud de hex impar');
+    var arr = new Uint8Array(clean.length / 2);
+    for (var i = 0; i < arr.length; i++) {
+      var byte = parseInt(clean.substr(i * 2, 2), 16);
+      if (Number.isNaN(byte)) throw new Error('Carácter no hexadecimal en el ciphertext');
+      arr[i] = byte;
+    }
+    return arr;
+  }
+  function randomHexString(length){
+    var bytes = new Uint8Array(Math.ceil(length / 2));
+    crypto.getRandomValues(bytes);
+    return bytesToHex(bytes).slice(0, length);
+  }
+
+  async function importAesKey(secretKey){
+    var keyBytes = bytesFromUtf8(secretKey);
+    if ([16, 24, 32].indexOf(keyBytes.length) === -1) {
+      throw new Error('Longitud de clave inválida: ' + keyBytes.length + ' bytes (se esperan 16, 24 o 32)');
+    }
+    return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CTR' }, false, ['encrypt', 'decrypt']);
+  }
+
+  async function encryptToken(plaintext, secretKey){
+    var key = await importAesKey(secretKey);
+    var randomHex = randomHexString(RANDOM_HEX_LENGTH);
+    var iv = bytesFromUtf8(randomHex); // bug conservado: ASCII del hex, no decodificado
+    var ptBytes = new TextEncoder().encode(plaintext);
+    var ctBuf = await crypto.subtle.encrypt({ name: 'AES-CTR', counter: iv, length: 128 }, key, ptBytes);
+    var ciphertextHex = bytesToHex(new Uint8Array(ctBuf));
+    return { token: randomHex + ciphertextHex, randomHex: randomHex, ciphertextHex: ciphertextHex };
+  }
+
+  async function decryptToken(token, secretKey){
+    if (token.length <= RANDOM_HEX_LENGTH) throw new Error('Token demasiado corto: falta el IV o el ciphertext');
+    var randomHex = token.slice(0, RANDOM_HEX_LENGTH);
+    var ciphertextHex = token.slice(RANDOM_HEX_LENGTH);
+    var key = await importAesKey(secretKey);
+    var iv = bytesFromUtf8(randomHex);
+    var ctBytes = hexToBytes(ciphertextHex);
+    var ptBuf = await crypto.subtle.decrypt({ name: 'AES-CTR', counter: iv, length: 128 }, key, ctBytes);
+    return new TextDecoder().decode(ptBuf);
+  }
+
+  function logLine(text, kind){
+    var line = document.createElement('div');
+    line.className = 'line ' + (kind || 'info');
+    var t = document.createElement('span');
+    t.className = 't';
+    t.textContent = new Date().toLocaleTimeString();
+    line.appendChild(t);
+    line.appendChild(document.createTextNode(text));
+    els.consoleLog.appendChild(line);
+    while (els.consoleLog.children.length > 200) els.consoleLog.removeChild(els.consoleLog.firstChild);
+    els.consoleLog.scrollTop = els.consoleLog.scrollHeight;
+  }
+
+  function setResultState(state, pillText){
+    els.resultPanel.className = 'panel panel--result' + (state !== 'neutral' ? ' is-' + state : '');
+    els.resultPill.className = 'pill' + (state !== 'neutral' ? ' is-' + state : '');
+    els.resultPill.textContent = pillText;
+  }
+
+  function updateKeyHint(){
+    var len = bytesFromUtf8(els.secretKey.value).length;
+    var map = { 16: 'AES-128', 24: 'AES-192', 32: 'AES-256' };
+    if (map[len]) {
+      els.keyHint.textContent = len + ' bytes → ' + map[len];
+      els.keyHint.className = 'hint is-ok';
+    } else {
+      els.keyHint.textContent = len + ' bytes — inválido, se necesitan 16, 24 o 32';
+      els.keyHint.className = 'hint is-danger';
+    }
+  }
+
+  async function handleEncrypt(){
+    try {
+      var result = await encryptToken(els.plaintext.value, els.secretKey.value);
+      els.outIv.value = result.randomHex;
+      els.outCt.value = result.ciphertextHex;
+      els.tokenField.value = result.token;
+      setResultState('neutral', '—');
+      els.outPlain.textContent = 'Pulsa Descifrar para verificar el round-trip.';
+      logLine('Cifrado OK — token de ' + result.token.length + ' caracteres hex.', 'ok');
+    } catch (err) {
+      logLine('Error al cifrar: ' + err.message, 'err');
+    }
+  }
+
+  async function handleDecrypt(){
+    var tokenVal = els.tokenField.value.trim();
+    try {
+      var plain = await decryptToken(tokenVal, els.secretKey.value);
+      els.outPlain.textContent = plain;
+      var looksValid = true;
+      try { JSON.parse(plain); } catch (e) { looksValid = false; }
+      if (looksValid) {
+        setResultState('success', 'JSON válido');
+        logLine('Descifrado OK — el resultado es JSON válido.', 'ok');
+      } else {
+        setResultState('danger', 'Corrupto');
+        logLine('Descifrado devolvió texto que no es JSON válido (clave incorrecta o token manipulado).', 'err');
+      }
+    } catch (err) {
+      els.outPlain.textContent = '—';
+      setResultState('danger', 'Error');
+      logLine('Error al descifrar: ' + err.message, 'err');
+    }
+  }
+
+  function handleTamper(){
+    var tokenVal = els.tokenField.value.trim();
+    if (tokenVal.length <= RANDOM_HEX_LENGTH + 1) {
+      logLine('No hay ciphertext que manipular — cifra algo primero.', 'err');
+      return;
+    }
+    var ivPart = tokenVal.slice(0, RANDOM_HEX_LENGTH);
+    var ctPart = tokenVal.slice(RANDOM_HEX_LENGTH);
+    var idx = ctPart.length - 2;
+    var nibble = parseInt(ctPart[idx], 16);
+    if (Number.isNaN(nibble)) { logLine('El ciphertext actual no es hex válido.', 'err'); return; }
+    var flipped = (nibble ^ 0xF).toString(16);
+    ctPart = ctPart.slice(0, idx) + flipped + ctPart.slice(idx + 1);
+    els.tokenField.value = ivPart + ctPart;
+    logLine('Manipulado 1 nibble del ciphertext (byte final) sin tocar el IV — ningún checksum lo detecta.', 'err');
+    handleDecrypt();
+  }
+
+  async function test(name, fn){
+    try {
+      var pass = await fn();
+      logLine((pass ? '✓ ' : '✗ ') + name, pass ? 'ok' : 'err');
+    } catch (err) {
+      logLine('✗ ' + name + ' — excepción inesperada: ' + err.message, 'err');
+    }
+  }
+
+  async function runSelfTests(){
+    logLine('— Autotest —', 'info');
+    var key128 = '0123456789abcdef';
+    var key256 = '01234567890123456789012345678901'.slice(0, 32);
+    var sample = JSON.stringify({ a: 1, demo: true });
+
+    await test('round-trip AES-128 preserva el mensaje', async function(){
+      var r = await encryptToken(sample, key128);
+      return (await decryptToken(r.token, key128)) === sample;
+    });
+    await test('round-trip AES-256 preserva el mensaje', async function(){
+      var r = await encryptToken(sample, key256);
+      return (await decryptToken(r.token, key256)) === sample;
+    });
+    await test('IV aleatorio -> tokens distintos para el mismo mensaje', async function(){
+      var a = (await encryptToken(sample, key128)).token;
+      var b = (await encryptToken(sample, key128)).token;
+      return a !== b;
+    });
+    await test('clave incorrecta corrompe el resultado sin lanzar error', async function(){
+      var r = await encryptToken(sample, key128);
+      var out = await decryptToken(r.token, 'fedcba9876543210');
+      return out !== sample;
+    });
+    await test('clave de longitud inválida lanza error', async function(){
+      try { await encryptToken(sample, 'clave-corta'); return false; }
+      catch (e) { return true; }
+    });
+  }
+
+  document.getElementById('btnEncrypt').addEventListener('click', handleEncrypt);
+  document.getElementById('btnDecrypt').addEventListener('click', handleDecrypt);
+  document.getElementById('btnTamper').addEventListener('click', handleTamper);
+  document.getElementById('btnSelfTest').addEventListener('click', runSelfTests);
+  document.getElementById('btnClearLog').addEventListener('click', function(){ els.consoleLog.innerHTML = ''; });
+  els.secretKey.addEventListener('input', updateKeyHint);
+
+  Array.prototype.forEach.call(document.querySelectorAll('.copy'), function(btn){
+    btn.addEventListener('click', async function(){
+      var input = document.getElementById(btn.dataset.copy);
+      var original = btn.textContent;
+      try {
+        await navigator.clipboard.writeText(input.value);
+        btn.textContent = 'Copiado';
+      } catch (e) {
+        input.select();
+        btn.textContent = 'Seleccionado';
+      }
+      setTimeout(function(){ btn.textContent = original; }, 1200);
+    });
+  });
+
+  (async function boot(){
+    updateKeyHint();
+    logLine('Listo. Datos de ejemplo precargados.', 'info');
+    await handleEncrypt();
+    await handleDecrypt();
+  })();
+})();
+</script>
