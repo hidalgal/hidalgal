@@ -1,0 +1,27 @@
+{
+  "customer": "ACME Corporation",
+  "monthly_commitment": 8000000,
+  "contract_end": "2027-11-30",
+  "reporting_month": "2026-09",
+  "actual":  {"2026-04": 2100000, "2026-05": 2900000, "2026-06": 3600000, "2026-07": 4400000, "2026-08": 4900000, "2026-09": 5300000},
+  "planned": {"2026-04": 2000000, "2026-05": 2800000, "2026-06": 3800000, "2026-07": 4800000, "2026-08": 5600000, "2026-09": 6500000,
+              "2026-10": 6800000, "2026-11": 7000000, "2026-12": 7200000, "2027-01": 7400000, "2027-02": 7600000, "2027-03": 7800000,
+              "2027-04": 8000000, "2027-05": 8000000, "2027-06": 8000000, "2027-07": 8000000, "2027-08": 8000000, "2027-09": 8000000,
+              "2027-10": 8000000, "2027-11": 8000000},
+  "use_cases": [
+    {"name": "STA", "description": "Example use case", "milestones": [
+      {"label": "Pilot", "start": "2026-07", "end": "2026-09"}, {"label": "Rollout", "start": "2026-10", "end": "2027-03"},
+      {"label": "Enterprise adoption", "start": "2027-04", "end": "2027-11"}]},
+    {"name": "AI Summary", "description": "Example use case", "milestones": [
+      {"label": "Design", "start": "2026-07", "end": "2026-09"}, {"label": "Pilot", "start": "2026-10", "end": "2027-03"},
+      {"label": "Scale usage", "start": "2027-04", "end": "2027-11"}]},
+    {"name": "AVA", "description": "Example use case", "milestones": [
+      {"label": "Pilot", "start": "2026-07", "end": "2026-12"}, {"label": "Scale to additional intents", "start": "2027-01", "end": "2027-11"}]}
+  ],
+  "focus_areas": [
+    {"title": "Close the short-term gap", "text": "Actual is below plan in the current month; recover through the planned actions."},
+    {"title": "Accelerate use case adoption", "text": "Drive the supplied use cases across additional teams."},
+    {"title": "Sustain monthly utilisation", "text": "Reach and maintain the monthly commitment through contract end."}
+  ],
+  "source_note": "ILLUSTRATIVE SAMPLE DATA for testing the skill - not real customer data."
+}
